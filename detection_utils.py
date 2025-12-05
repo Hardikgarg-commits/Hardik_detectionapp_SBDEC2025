@@ -7,13 +7,10 @@ from typing import List, Dict, Tuple
 import os
 from pathlib import Path
 
-# Avoid OpenMP duplicate crashes
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
-# ===============================
-#  MODEL LOADER (CACHED)
-# ===============================
 @st.cache_resource
 def load_yolo_model(weights_path: str):
     """
@@ -23,9 +20,7 @@ def load_yolo_model(weights_path: str):
     return model
 
 
-# ===============================
-#  BATCH INFERENCE (FAST FOR CPU)
-# ===============================
+
 def batch_infer(model, image_paths, imgsz=320, batch_size=8, conf=0.25):
     """
     Run fast batched inference on CPU.
@@ -51,9 +46,6 @@ def batch_infer(model, image_paths, imgsz=320, batch_size=8, conf=0.25):
     return results
 
 
-# ===============================
-#  DETECTION MANAGER CLASS
-# ===============================
 class DetectionManager:
     def __init__(self):
         self.model_path = Path(__file__).parent.parent / "best.pt"
@@ -75,9 +67,7 @@ class DetectionManager:
 
         self.load_model()
 
-    # ------------------------
-    # LOAD MODEL
-    # ------------------------
+
     def load_model(self):
         try:
             if os.path.exists(self.model_path):
@@ -90,9 +80,7 @@ class DetectionManager:
             st.error(f"Error loading model: {str(e)}")
             return False
 
-    # ------------------------
-    # DETECT SINGLE IMAGE
-    # ------------------------
+
     def detect_objects(self, image: np.ndarray) -> List[Dict]:
         if self.model is None:
             return []
@@ -122,18 +110,13 @@ class DetectionManager:
             st.error(f"Error during detection: {str(e)}")
             return []
 
-    # ------------------------
-    # BATCH DETECTION WRAPPER
-    # ------------------------
     def detect_batch(self, image_paths, imgsz=320, batch_size=8, conf=0.25):
         if self.model is None:
             st.error("Model not loaded")
             return []
         return batch_infer(self.model, image_paths, imgsz, batch_size, conf)
 
-    # ------------------------
-    # DRAW DETECTIONS
-    # ------------------------
+ 
     def draw_detections(self, image: np.ndarray, detections: List[Dict]) -> np.ndarray:
         annotated = image.copy()
 
@@ -151,9 +134,7 @@ class DetectionManager:
 
         return annotated
 
-    # ------------------------
-    # CROP DETECTIONS
-    # ------------------------
+
     def crop_detections(self, image: np.ndarray, detections: List[Dict]):
         crops = []
         for det in detections:
@@ -163,17 +144,12 @@ class DetectionManager:
                 crops.append(crop)
         return crops
 
-    # ------------------------
-    # PROCESS VIDEO FRAME
-    # ------------------------
     def process_video_frame(self, frame: np.ndarray):
         detections = self.detect_objects(frame)
         annotated = self.draw_detections(frame, detections)
         return annotated, detections
 
-    # ------------------------
-    # CLASS STATISTICS
-    # ------------------------
+ 
     def get_class_statistics(self, detections_list):
         all_dets = [d for group in detections_list for d in group]
 
